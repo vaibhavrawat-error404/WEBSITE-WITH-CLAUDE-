@@ -1,0 +1,390 @@
+import React, { useState, useEffect } from 'react';
+
+const OnePieceNoteApp = () => {
+  const [notes, setNotes] = useState([]);
+  const [newNote, setNewNote] = useState('');
+  const [newTitle, setNewTitle] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('Adventure Log');
+  const [editingId, setEditingId] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [shareId, setShareId] = useState(null);
+
+  const categories = [
+    'Adventure Log',
+    'Character Notes',
+    'Story Arc',
+    'Bounty Hunters',
+    'Treasure Map',
+    'Devil Fruits',
+    'Crew Training'
+  ];
+
+  const categoryIcons = {
+    'Adventure Log': '🗺️',
+    'Character Notes': '👤',
+    'Story Arc': '📖',
+    'Bounty Hunters': '🏴‍☠️',
+    'Treasure Map': '💎',
+    'Devil Fruits': '🍎',
+    'Crew Training': '⚔️'
+  };
+
+  // Load notes from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('onePieceNotes');
+    if (saved) setNotes(JSON.parse(saved));
+  }, []);
+
+  // Save notes to localStorage
+  useEffect(() => {
+    localStorage.setItem('onePieceNotes', JSON.stringify(notes));
+  }, [notes]);
+
+  const addNote = () => {
+    if (!newTitle.trim() || !newNote.trim()) return;
+    
+    const note = {
+      id: Date.now(),
+      title: newTitle,
+      content: newNote,
+      category: selectedCategory,
+      date: new Date().toLocaleDateString(),
+      completed: false
+    };
+    
+    setNotes([note, ...notes]);
+    setNewTitle('');
+    setNewNote('');
+    setShowForm(false);
+  };
+
+  const deleteNote = (id) => {
+    setNotes(notes.filter(n => n.id !== id));
+  };
+
+  const toggleComplete = (id) => {
+    setNotes(notes.map(n =>
+      n.id === id ? { ...n, completed: !n.completed } : n
+    ));
+  };
+
+  const filteredNotes = notes.filter(note =>
+    note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    note.content.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const completedCount = notes.filter(n => n.completed).length;
+  const totalCount = notes.length;
+  const bounty = (completedCount / Math.max(totalCount, 1)) * 100;
+
+  const exportAsWantedPoster = (note) => {
+    const poster = `
+╔════════════════════════════════╗
+║      WANTED POSTER             ║
+╠════════════════════════════════╣
+║ TITLE: ${note.title.padEnd(26)} ║
+╠════════════════════════════════╣
+║ CATEGORY: ${note.category.padEnd(22)} ║
+║ DATE: ${note.date.padEnd(26)} ║
+╠════════════════════════════════╣
+║ DETAILS:                       ║
+║ ${note.content.substring(0, 30).padEnd(30)} ║
+╠════════════════════════════════╣
+║ BOUNTY: 🏴‍☠️ LEGENDARY KNOWLEDGE ║
+╚════════════════════════════════╝
+    `;
+    return poster;
+  };
+
+  return (
+    <div style={{ padding: '1.5rem', fontFamily: 'system-ui, -apple-system, sans-serif', backgroundColor: '#0a0e27', color: '#fff', minHeight: '100vh' }}>
+      {/* Header */}
+      <div style={{ textAlign: 'center', marginBottom: '2rem', borderBottom: '3px solid #ff6b35', paddingBottom: '1rem' }}>
+        <h1 style={{ fontSize: '2.5rem', margin: '0 0 0.5rem', color: '#ffd700', textShadow: '2px 2px 4px rgba(255, 107, 53, 0.5)' }}>
+          🏴‍☠️ ADVENTURE CHRONICLE 🏴‍☠️
+        </h1>
+        <p style={{ margin: '0', fontSize: '0.9rem', color: '#aaa' }}>Chart your journey like a true pirate captain</p>
+      </div>
+
+      {/* Progress Tracker */}
+      <div style={{ background: 'linear-gradient(135deg, #1a237e 0%, #0d1b2a 100%)', padding: '1.5rem', borderRadius: '12px', marginBottom: '2rem', border: '2px solid #ff6b35' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <h3 style={{ margin: 0, fontSize: '1.1rem' }}>📊 Captain's Progress</h3>
+          <span style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#ffd700' }}>{completedCount}/{totalCount} Completed</span>
+        </div>
+        <div style={{ width: '100%', height: '24px', background: '#0a0e27', borderRadius: '8px', border: '1px solid #ff6b35', overflow: 'hidden' }}>
+          <div style={{
+            height: '100%',
+            width: `${bounty}%`,
+            background: 'linear-gradient(90deg, #ff6b35 0%, #ffd700 100%)',
+            transition: 'width 0.3s ease'
+          }}></div>
+        </div>
+        <div style={{ marginTop: '0.5rem', fontSize: '0.85rem', color: '#aaa' }}>
+          {bounty.toFixed(0)}% of your journey mapped ⚓
+        </div>
+      </div>
+
+      {/* Search Bar */}
+      <div style={{ marginBottom: '2rem' }}>
+        <input
+          type="text"
+          placeholder="🔍 Search through your logs..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          style={{
+            width: '100%',
+            padding: '12px 16px',
+            fontSize: '1rem',
+            border: '2px solid #ff6b35',
+            borderRadius: '8px',
+            background: '#1a1f3a',
+            color: '#fff',
+            boxSizing: 'border-box'
+          }}
+        />
+      </div>
+
+      {/* Add Note Button */}
+      <button
+        onClick={() => setShowForm(!showForm)}
+        style={{
+          width: '100%',
+          padding: '16px',
+          fontSize: '1.1rem',
+          fontWeight: 'bold',
+          background: 'linear-gradient(135deg, #ff6b35 0%, #ff8c42 100%)',
+          color: '#0a0e27',
+          border: 'none',
+          borderRadius: '8px',
+          cursor: 'pointer',
+          marginBottom: '2rem',
+          transition: 'transform 0.2s'
+        }}
+        onMouseOver={(e) => e.target.style.transform = 'scale(1.02)'}
+        onMouseOut={(e) => e.target.style.transform = 'scale(1)'}
+      >
+        {showForm ? '❌ Cancel' : '➕ Start New Entry'}
+      </button>
+
+      {/* Add Note Form */}
+      {showForm && (
+        <div style={{ background: '#1a1f3a', padding: '1.5rem', borderRadius: '12px', marginBottom: '2rem', border: '2px solid #ffd700' }}>
+          <h3 style={{ marginTop: 0, color: '#ffd700' }}>⚓ Create New Log Entry</h3>
+          
+          <input
+            type="text"
+            placeholder="Title of your adventure..."
+            value={newTitle}
+            onChange={(e) => setNewTitle(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '12px',
+              marginBottom: '12px',
+              border: '1px solid #ff6b35',
+              borderRadius: '6px',
+              background: '#0a0e27',
+              color: '#fff',
+              fontSize: '1rem',
+              boxSizing: 'border-box'
+            }}
+          />
+
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '12px',
+              marginBottom: '12px',
+              border: '1px solid #ff6b35',
+              borderRadius: '6px',
+              background: '#0a0e27',
+              color: '#fff',
+              fontSize: '1rem',
+              boxSizing: 'border-box'
+            }}
+          >
+            {categories.map(cat => (
+              <option key={cat} value={cat}>{categoryIcons[cat]} {cat}</option>
+            ))}
+          </select>
+
+          <textarea
+            placeholder="Write your detailed notes here..."
+            value={newNote}
+            onChange={(e) => setNewNote(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '12px',
+              marginBottom: '12px',
+              border: '1px solid #ff6b35',
+              borderRadius: '6px',
+              background: '#0a0e27',
+              color: '#fff',
+              fontSize: '1rem',
+              minHeight: '120px',
+              fontFamily: 'inherit',
+              boxSizing: 'border-box',
+              resize: 'vertical'
+            }}
+          />
+
+          <button
+            onClick={addNote}
+            style={{
+              width: '100%',
+              padding: '12px',
+              background: '#ffd700',
+              color: '#0a0e27',
+              border: 'none',
+              borderRadius: '6px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              fontSize: '1rem'
+            }}
+          >
+            🏴‍☠️ Add to Chronicle
+          </button>
+        </div>
+      )}
+
+      {/* Notes Display */}
+      <div>
+        {filteredNotes.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '3rem 1rem', color: '#666' }}>
+            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⛵</div>
+            <p>No notes yet! Start documenting your adventure...</p>
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gap: '16px' }}>
+            {filteredNotes.map(note => (
+              <div
+                key={note.id}
+                style={{
+                  background: note.completed 
+                    ? 'linear-gradient(135deg, #0d3d26 0%, #1a2f1f 100%)'
+                    : 'linear-gradient(135deg, #1a237e 0%, #0d1b2a 100%)',
+                  padding: '1.5rem',
+                  borderRadius: '12px',
+                  border: `2px solid ${note.completed ? '#00cc66' : '#ff6b35'}`,
+                  position: 'relative',
+                  opacity: note.completed ? 0.85 : 1
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                      <input
+                        type="checkbox"
+                        checked={note.completed}
+                        onChange={() => toggleComplete(note.id)}
+                        style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+                      />
+                      <span style={{ fontSize: '0.8rem', color: '#aaa' }}>
+                        {categoryIcons[note.category]} {note.category}
+                      </span>
+                    </div>
+                    <h4 style={{
+                      margin: '0 0 4px',
+                      fontSize: '1.3rem',
+                      color: '#ffd700',
+                      textDecoration: note.completed ? 'line-through' : 'none'
+                    }}>
+                      {note.title}
+                    </h4>
+                    <p style={{ margin: '0 0 12px', color: '#ccc', lineHeight: 1.6 }}>
+                      {note.content.length > 150 ? note.content.substring(0, 150) + '...' : note.content}
+                    </p>
+                    <p style={{ margin: '0', fontSize: '0.85rem', color: '#888' }}>📅 {note.date}</p>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    onClick={() => setShareId(shareId === note.id ? null : note.id)}
+                    style={{
+                      flex: 1,
+                      padding: '8px',
+                      background: '#ff6b35',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '0.9rem',
+                      fontWeight: 'bold'
+                    }}
+                  >
+                    📤 Share
+                  </button>
+                  <button
+                    onClick={() => deleteNote(note.id)}
+                    style={{
+                      flex: 1,
+                      padding: '8px',
+                      background: '#663333',
+                      color: '#ff6b35',
+                      border: '1px solid #ff6b35',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '0.9rem'
+                    }}
+                  >
+                    🗑️ Delete
+                  </button>
+                </div>
+
+                {/* Wanted Poster Share */}
+                {shareId === note.id && (
+                  <div style={{
+                    marginTop: '12px',
+                    background: '#0a0e27',
+                    padding: '12px',
+                    borderRadius: '6px',
+                    border: '1px dashed #ffd700',
+                    fontFamily: 'monospace',
+                    fontSize: '0.75rem',
+                    whiteSpace: 'pre-wrap',
+                    color: '#ffd700',
+                    overflow: 'auto',
+                    maxHeight: '200px'
+                  }}>
+                    {exportAsWantedPoster(note)}
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(exportAsWantedPoster(note));
+                        alert('Wanted poster copied! Share it with your crew! 🏴‍☠️');
+                      }}
+                      style={{
+                        marginTop: '8px',
+                        width: '100%',
+                        padding: '8px',
+                        background: '#ffd700',
+                        color: '#0a0e27',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontWeight: 'bold',
+                        fontFamily: 'system-ui'
+                      }}
+                    >
+                      Copy to Clipboard 📋
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Footer Stats */}
+      <div style={{ marginTop: '3rem', paddingTop: '1.5rem', borderTop: '2px solid #ff6b35', textAlign: 'center', color: '#888', fontSize: '0.9rem' }}>
+        <p>⚓ Total Adventures: {totalCount} | 🏴‍☠️ Completed: {completedCount} | 💪 Keep sailing, captain!</p>
+      </div>
+    </div>
+  );
+};
+
+export default OnePieceNoteApp;
